@@ -3,8 +3,7 @@ from functools import lru_cache
 from pathlib import Path
 
 
-# Go up 3 levels:
-# config.py -> core -> app -> backend
+# config.py → core → app → backend → enterprise_rag
 BASE_DIR = Path(__file__).resolve().parents[3]
 ENV_FILE = BASE_DIR / ".env"
 
@@ -33,6 +32,14 @@ class Settings(BaseSettings):
 
     jwt_algorithm: str = "HS256"
     access_token_exp_minutes: int = 60
+
+    @property
+    def file_storage_path(self) -> Path:
+        path = Path(self.file_storage_root)
+        if not path.is_absolute():
+            path = BASE_DIR / path
+        return path.resolve()
+
 
 @lru_cache
 def get_settings() -> Settings:

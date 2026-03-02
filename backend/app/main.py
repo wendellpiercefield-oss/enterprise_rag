@@ -4,12 +4,14 @@ from app.db.session import engine
 from app.api.tenant import router as tenant_router
 from app.api.auth import router as auth_router
 from app.api.collection import router as collection_router
+from app.api.documents import router as documents_router
 
 app = FastAPI(title="Knowledge Platform")
 
 app.include_router(tenant_router)
 app.include_router(auth_router)
 app.include_router(collection_router)
+app.include_router(documents_router)
 
 for route in app.routes:
     print("ROUTE:", route.path, route.methods)
