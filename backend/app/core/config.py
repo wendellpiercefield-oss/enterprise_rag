@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     env: str = "local"
 
     database_url: str
-    redis_url: str
 
     jwt_secret: str
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from pathlib import Path
 import shutil
@@ -10,6 +10,7 @@ from app.db.models.user import User
 from app.db.models.collection import Collection
 from app.db.models.document import Document
 from app.core.config import get_settings
+from app.services.document_processor import process_document
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -19,6 +20,7 @@ settings = get_settings()
 @router.post("/upload/{collection_id}")
 def upload_document(
     collection_id: int,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -53,6 +55,8 @@ def upload_document(
     db.add(document)
     db.commit()
     db.refresh(document)
+
+    background_tasks.add_task(process_document, document.id)
 
     return {
         "document_id": document.id,
