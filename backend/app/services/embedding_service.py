@@ -4,16 +4,26 @@ from app.core.config import get_settings
 settings = get_settings()
 
 
-def generate_embedding(text: str):
+def generate_embeddings(texts):
 
     response = requests.post(
         f"{settings.ollama_base_url}/api/embed",
         json={
             "model": settings.embed_model,
-            "input": text
+            "input": texts
         }
     )
 
     response.raise_for_status()
 
-    return response.json()["embeddings"][0]
+    data = response.json()
+
+    # Ollama batch embeddings endpoint
+    if "embeddings" in data:
+        return data["embeddings"]
+
+    # fallback if API returns single embedding
+    if "embedding" in data:
+        return [data["embedding"]]
+
+    raise RuntimeError(f"Unexpected Ollama response: {data}")

@@ -1,74 +1,116 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import text
+
 from app.db.session import SessionLocal
 from app.db.models.document import Document
+
 from app.services.text_extractor import extract_text
 from app.services.chunker import chunk_text
-from app.services.embedding_service import generate_embedding
-
-from sqlalchemy import text
+from app.services.embedding_service import generate_embeddings
 
 
 def process_document(document_id: int):
 
     db: Session = SessionLocal()
 
-    document = db.query(Document).filter(Document.id == document_id).first()
+    try:
 
-    if not document:
-        print("Document not found")
-        return
+        document = db.query(Document).filter(Document.id == document_id).first()
 
-    file_path = document.file_path
+        if not document:
+            print("Document not found")
+            return
 
-    print(f"Processing document {document_id}")
+        file_path = document.file_path
 
-    # Extract text
-    text_content = extract_text(file_path)
+        print(f"Processing document {document_id}")
 
-    # Chunk text
-    chunks = chunk_text(text_content)
+        # -------------------------
+        # Extract text
+        # -------------------------
 
-    print(f"Created {len(chunks)} chunks")
+        text_content = extract_text(file_path)
 
-    for idx, chunk in enumerate(chunks):
+        # -------------------------
+        # Chunk text
+        # -------------------------
 
-        embedding = generate_embedding(chunk)
+        chunks = chunk_text(text_content)
 
-        db.execute(
-            text("""
-                INSERT INTO document_chunks
-                (
-                    tenant_id,
-                    collection_id,
-                    document_id,
-                    chunk_index,
-                    content,
-                    embedding
-                )
-                VALUES
-                (
-                    :tenant_id,
-                    :collection_id,
-                    :document_id,
-                    :chunk_index,
-                    :content,
-                    :embedding
-                )
-            """),
-            {
-                "tenant_id": document.tenant_id,
-                "collection_id": document.collection_id,
-                "document_id": document.id,
-                "chunk_index": idx,
-                "content": chunk,
-                "embedding": embedding
-            }
-        )
+        print(f"Created {len(chunks)} chunks")
 
-    document.status = "indexed"
+        if not chunks:
+            print("No chunks created")
+            return
 
-    db.commit()
+        # -------------------------
+        # Generate embeddings (BATCH)
+        # -------------------------
 
-    print("Chunks saved")
+        embeddings = generate_embeddings(chunks)
 
-    db.close()
+        if not embeddings:
+            raise RuntimeError("Embedding service returned no vectors")
+
+        if len(embeddings) != len(chunks):
+            raise RuntimeError(
+                f"Embedding count mismatch: {len(embeddings)} embeddings for {len(chunks)} chunks"
+            )
+
+        # -------------------------
+        # Store chunks
+        # -------------------------
+
+        for idx, chunk in enumerate(chunks):
+
+            embedding = embeddings[idx]
+
+            if not embedding:
+                print(f"Skipping chunk {idx} due to empty embedding")
+                continue
+
+            db.execute(
+                text("""
+                    INSERT INTO document_chunks
+                    (
+                        tenant_id,
+                        collection_id,
+                        document_id,
+                        chunk_index,
+                        content,
+                        embedding
+                    )
+                    VALUES
+                    (
+                        :tenant_id,
+                        :collection_id,
+                        :document_id,
+                        :chunk_index,
+                        :content,
+                        :embedding
+                    )
+                """),
+                {
+                    "tenant_id": document.tenant_id,
+                    "collection_id": document.collection_id,
+                    "document_id": document.id,
+                    "chunk_index": idx,
+                    "content": chunk,
+                    "embedding": embedding
+                }
+            )
+
+        document.status = "indexed"
+
+        db.commit()
+
+        print("Chunks saved")
+
+    except Exception as e:
+
+        print("Document processing failed:", e)
+        db.rollback()
+
+    finally:
+
+        db.close()
