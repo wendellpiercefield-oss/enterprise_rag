@@ -1,56 +1,74 @@
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.db.models.document import Document
-
 from app.services.text_extractor import extract_text
 from app.services.chunker import chunk_text
+from app.services.embedding_service import generate_embedding
+
+from sqlalchemy import text
 
 
 def process_document(document_id: int):
 
     db: Session = SessionLocal()
 
-    try:
+    document = db.query(Document).filter(Document.id == document_id).first()
 
-        document = db.query(Document).filter(Document.id == document_id).first()
+    if not document:
+        print("Document not found")
+        return
 
-        if not document:
-            print(f"Document {document_id} not found")
-            return
+    file_path = document.file_path
 
-        # update status
-        document.status = "processing"
-        db.commit()
+    print(f"Processing document {document_id}")
 
-        file_path = document.file_path
+    # Extract text
+    text_content = extract_text(file_path)
 
-        print(f"Processing document {document.filename}")
+    # Chunk text
+    chunks = chunk_text(text_content)
 
-        # extract text
-        text = extract_text(file_path)
+    print(f"Created {len(chunks)} chunks")
 
-        if not text:
-            raise ValueError("No text extracted")
+    for idx, chunk in enumerate(chunks):
 
-        # split into chunks
-        chunks = chunk_text(text)
+        embedding = generate_embedding(chunk)
 
-        print(f"Created {len(chunks)} chunks")
+        db.execute(
+            text("""
+                INSERT INTO document_chunks
+                (
+                    tenant_id,
+                    collection_id,
+                    document_id,
+                    chunk_index,
+                    content,
+                    embedding
+                )
+                VALUES
+                (
+                    :tenant_id,
+                    :collection_id,
+                    :document_id,
+                    :chunk_index,
+                    :content,
+                    :embedding
+                )
+            """),
+            {
+                "tenant_id": document.tenant_id,
+                "collection_id": document.collection_id,
+                "document_id": document.id,
+                "chunk_index": idx,
+                "content": chunk,
+                "embedding": embedding
+            }
+        )
 
-        # TODO: store chunks in database
-        # TODO: generate embeddings
+    document.status = "indexed"
 
-        document.status = "indexed"
-        db.commit()
+    db.commit()
 
-    except Exception as e:
+    print("Chunks saved")
 
-        print(f"Document processing failed: {e}")
-
-        document = db.query(Document).filter(Document.id == document_id).first()
-        if document:
-            document.status = "failed"
-            db.commit()
-
-    finally:
-        db.close()
+    db.close()
