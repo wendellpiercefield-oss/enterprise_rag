@@ -18,6 +18,6 @@ class Document(Base):
 
     uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
-    status = Column(String(32), nullable=False, default="pending", index=True)
+    status = Column(String(32), nullable=False, default="uploaded", index=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
