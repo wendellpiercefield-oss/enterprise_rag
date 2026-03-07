@@ -1,38 +1,150 @@
-\# Knowledge Platform
+Knowledge Platform
 
+A multi-tenant AI knowledge platform built with FastAPI, PostgreSQL, pgvector, and Ollama.
 
+The system allows users to:
 
-Internal multi-user knowledge platform.
+Upload documents
 
+Automatically extract and chunk text
 
+Generate embeddings
 
-\## Stack
+Perform semantic search and AI chat over internal knowledge
 
-
+Architecture
+FastAPI
+   │
+   ▼
+Authentication / Tenants
+   │
+   ▼
+Collections
+   │
+   ▼
+Document Upload
+   │
+   ▼
+File Storage (local)
+   │
+   ▼
+Background Processing
+   │
+   ▼
+Text Extraction
+   │
+   ▼
+Chunking
+   │
+   ▼
+Embeddings (Ollama)
+   │
+   ▼
+pgvector Storage
+Technology Stack
 
 Backend:
 
-\- FastAPI
+FastAPI
+SQLAlchemy
+PostgreSQL
+pgvector
+Pydantic
 
-\- PostgreSQL + pgvector
+AI / ML:
 
-\- Redis
+Ollama
+nomic-embed-text
+Llama3
 
-\- RQ workers
+Document Processing:
 
-\- Ollama
+pypdf
+python-docx
 
+Infrastructure:
 
+Docker
+PostgreSQL container
+Project Structure
+backend/
+ ├─ app/
+ │   ├─ api/
+ │   │   ├─ auth.py
+ │   │   ├─ collections.py
+ │   │   └─ documents.py
+ │   │
+ │   ├─ core/
+ │   │   └─ config.py
+ │   │
+ │   ├─ db/
+ │   │   ├─ models/
+ │   │   └─ session.py
+ │   │
+ │   └─ services/
+ │       ├─ document_processor.py
+ │       ├─ text_extractor.py
+ │       └─ chunker.py
+ │
+ └─ data/
+     └─ files/
+Running the System
 
-Frontend:
+Start PostgreSQL container:
 
-\- React (Vite)
+docker start kp-postgres
 
+Activate Python environment:
 
+cd backend
+.\.venv\Scripts\activate
 
-\## Environments
+Run the API:
 
+python -m uvicorn app.main:app --port 8000
 
+Open Swagger:
 
-Local development via Docker Compose.
+http://localhost:8000/docs
+Document Processing Workflow
+Upload document
+        │
+        ▼
+File stored on disk
+        │
+        ▼
+Document record saved
+        │
+        ▼
+Background processing task
+        │
+        ▼
+Extract text
+        │
+        ▼
+Chunk text
+        │
+        ▼
+Generate embeddings
+        │
+        ▼
+Store vectors in pgvector
+Current Status
 
+Working:
+
+Authentication
+Tenants
+Collections
+Document upload
+File storage
+Background processing
+Text extraction
+Chunking
+pgvector enabled
+
+Next:
+
+Embedding generation
+Vector search
+AI chat interface
