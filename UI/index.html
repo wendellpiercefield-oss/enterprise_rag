@@ -2,34 +2,60 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Knowledge Assistant</title>
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="container">
-
-<h1>Company Knowledge Assistant</h1>
-
-<div class="search-box">
-<input id="question" placeholder="Ask a question about manuals, motors, procedures...">
-<button onclick="ask()">Ask</button>
+<div class="header">
+    <img src="images/whitelogo.png" class="logo">
+    <div class="title">White Engineering Knowledge Assistant</div>
 </div>
 
-<div class="answer-panel">
-<h2>Answer</h2>
-<div id="answer"></div>
-</div>
+<div class="layout">
 
-<div class="sources-panel">
-<h2>Sources</h2>
-<div id="sources"></div>
-</div>
+    <!-- LEFT: DOCUMENT PANEL -->
+    <div class="panel documents">
+
+        <h3>Documents</h3>
+
+        <input type="file" id="fileUpload">
+
+        <button onclick="upload()">Upload</button>
+
+        <div id="doclist">
+            Manuals will appear here
+        </div>
+
+    </div>
+
+    <!-- CENTER: CHAT -->
+    <div class="panel chat">
+
+        <div id="chatWindow"></div>
+
+        <div class="chatInput">
+
+            <input id="question"
+            placeholder="Ask about torque specs, shaft sizes, service procedures...">
+
+            <button onclick="ask()">Ask</button>
+
+        </div>
+
+    </div>
+
+    <!-- RIGHT: SOURCES -->
+    <div class="panel sources">
+
+        <h3>Sources</h3>
+
+        <div id="sources"></div>
+
+    </div>
 
 </div>
 
 <script src="app.js"></script>
 
-</body>
-</html>
+</body></html>

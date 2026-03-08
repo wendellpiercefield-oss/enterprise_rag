@@ -1,58 +1,115 @@
-async function ask() {
+async function ask(){
 
-    const question = document.getElementById("question").value
+const question = document.getElementById("question").value
 
-    document.getElementById("answer").innerText = "Thinking..."
-    document.getElementById("sources").innerHTML = ""
+if(!question) return
 
-    const response = await fetch("http://localhost:8000/chat", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            query: question
-        })
-    })
+const chat = document.getElementById("chatWindow")
 
-    const result = await response.json()
+// show user message
+chat.innerHTML += `
+<div class="message user">${question}</div>
+`
 
-    console.log(result)
+document.getElementById("question").value=""
 
-    // Answer
-    document.getElementById("answer").innerText = result.answer?.answer || "No answer returned."
+// show thinking bubble
+const thinking = document.createElement("div")
+thinking.className="message bot"
+thinking.innerText="Thinking..."
+chat.appendChild(thinking)
 
-    // Sources
-    const sources = result.answer?.sources || []
+const response = await fetch("http://localhost:8000/chat",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+query: question
+})
+})
 
-    for (let s of sources) {
+const result = await response.json()
 
-        const div = document.createElement("div")
-        div.className = "source"
+thinking.remove()
 
-        const preview = (s.content || "").substring(0, 200)
+const answerText = result?.answer?.answer || "No answer returned."
 
-        div.innerHTML = `
-            <b>${s.filename || "Document"} (chunk ${s.chunk_index})</b><br>
-            <span class="preview">${preview}...</span>
-            <div class="full" style="display:none">${s.content}</div>
-        `
+// show assistant answer
+chat.innerHTML += `
+<div class="message bot">${answerText}</div>
+`
 
-        // CLICK TO EXPAND SOURCE
-        div.onclick = function () {
+chat.scrollTop = chat.scrollHeight
 
-            const full = div.querySelector(".full")
+// render sources safely
+renderSources(result?.answer?.sources || [], question)
 
-            if (full.style.display === "none") {
-                full.style.display = "block"
-            } else {
-                full.style.display = "none"
-            }
+}
 
-        }
 
-        document.getElementById("sources").appendChild(div)
+
+function renderSources(sources, question){
+
+const container = document.getElementById("sources")
+
+container.innerHTML = ""
+
+if(!sources || sources.length === 0){
+    container.innerHTML = "<i>No sources returned</i>"
+    return
+}
+
+
+// break question into keywords for highlighting
+const keywords = question
+    .toLowerCase()
+    .replace(/[^\w\s]/g,"")
+    .split(" ")
+    .filter(w => w.length > 3)
+
+
+for(let s of sources){
+
+    const div = document.createElement("div")
+    div.className = "source"
+
+    const filename = s.filename || "Document"
+    const chunk = s.chunk_index ?? "?"
+    const sourceType = s.source || ""
+
+    let content = s.content || ""
+
+    // highlight keywords
+    for(let k of keywords){
+
+        const regex = new RegExp(`(${k})`,"gi")
+        content = content.replace(regex,"<mark>$1</mark>")
 
     }
+
+    const preview = content.substring(0,200)
+
+    div.innerHTML = `
+<b>${filename} (chunk ${chunk})</b>
+<span style="color:#888">[${sourceType}]</span><br>
+<span class="preview">${preview}...</span>
+<div class="full">${content}</div>
+`
+
+    div.onclick = function(){
+
+        const full = div.querySelector(".full")
+
+        if(full.style.display === "block")
+            full.style.display = "none"
+        else
+            full.style.display = "block"
+
+    }
+
+    container.appendChild(div)
+
+}
 
 }
