@@ -6,8 +6,17 @@ from app.api.auth import router as auth_router
 from app.api.collection import router as collection_router
 from app.api.documents import router as documents_router
 from app.api.search import router as search_router
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Knowledge Platform")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # safe for internal tool
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(tenant_router)
 app.include_router(auth_router)

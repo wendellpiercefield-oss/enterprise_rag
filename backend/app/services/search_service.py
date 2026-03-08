@@ -17,18 +17,21 @@ def search_chunks(query: str, limit: int = 5):
         vector_result = db.execute(
             text("""
                 SELECT
-                    content,
-                    document_id,
-                    chunk_index,
-                    1 - (embedding <=> CAST(:embedding AS vector)) AS similarity,
-                    'vector' AS source
-                FROM document_chunks
-                WHERE embedding IS NOT NULL
-                ORDER BY embedding <=> CAST(:embedding AS vector)
+                    dc.content,
+                    dc.document_id,
+                    dc.chunk_index,
+                    d.filename,
+                    'vector' AS source,
+                    1 - (dc.embedding <=> CAST(:embedding AS vector)) AS similarity
+                FROM document_chunks dc
+                JOIN documents d
+                ON d.id = dc.document_id
+                WHERE dc.embedding IS NOT NULL
+                ORDER BY dc.embedding <=> CAST(:embedding AS vector)
                 LIMIT :limit
             """),
             {
-                "embedding": embedding_str,
+                "embedding": embedding,
                 "limit": limit
             }
         ).fetchall()
@@ -39,13 +42,15 @@ def search_chunks(query: str, limit: int = 5):
         keyword_result = db.execute(
             text("""
                 SELECT
-                    content,
-                    document_id,
-                    chunk_index,
-                    0.75 AS similarity,
+                    dc.content,
+                    dc.document_id,
+                    dc.chunk_index,
+                    d.filename,
                     'keyword' AS source
-                FROM document_chunks
-                WHERE content ILIKE :pattern
+                FROM document_chunks dc
+                JOIN documents d
+                ON d.id = dc.document_id
+                WHERE dc.content ILIKE :pattern
                 LIMIT :limit
             """),
             {
@@ -58,19 +63,23 @@ def search_chunks(query: str, limit: int = 5):
         # Merge + dedupe
         # -------------------------
         merged = {}
+
         for r in list(vector_result) + list(keyword_result):
+
             key = (r.document_id, r.chunk_index)
 
             row_data = {
                 "content": r.content,
                 "document_id": r.document_id,
+                "filename": r.filename,   # <-- ADD THIS
                 "chunk_index": r.chunk_index,
-                "similarity": float(r.similarity),
+                "similarity": float(getattr(r, "similarity", 0)),  # safe for keyword rows
                 "source": r.source
             }
 
             if key not in merged or row_data["similarity"] > merged[key]["similarity"]:
                 merged[key] = row_data
+
 
         # sort best first
         results = sorted(

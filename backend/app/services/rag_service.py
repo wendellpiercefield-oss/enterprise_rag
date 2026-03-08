@@ -12,15 +12,15 @@ def rag_answer(query: str):
     context = "\n\n--- DOCUMENT CHUNK ---\n\n".join(r["content"] for r in results)
 
     prompt = f"""
-You are a hydraulic motor service specialist.
+You are a hydraulic motor product specialist.
 
-Answer the question using ONLY the provided service manual text.
+Use ONLY the provided catalog text to answer the question.
 
-If the manual contains a procedure, list the steps clearly.
-
-Do not invent steps that are not present.
-
-If the answer cannot be determined from the text, say so.
+Important rules:
+- Extract numeric specifications when present
+- Engineering manuals often contain tables with torque values
+- If a chunk references bolts or torque, extract the numeric value
+- If the torque appears as "105 +/-5 lb-ft", report it exactly
 
 Context:
 {context}
@@ -28,7 +28,7 @@ Context:
 Question:
 {query}
 
-Answer:
+Answer clearly and concisely.
 """
 
     response = requests.post(
