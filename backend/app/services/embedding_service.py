@@ -1,28 +1,31 @@
 import requests
-from app.core.config import get_settings
 
-settings = get_settings()
+OLLAMA_URL = "http://localhost:11434/api/embed"
+MODEL = "nomic-embed-text"
 
 
 def generate_embeddings(texts):
 
+    print("Sending embedding request...")
+
     response = requests.post(
-        f"{settings.ollama_base_url}/api/embed",
+        OLLAMA_URL,
         json={
-            "model": settings.embed_model,
+            "model": MODEL,
             "input": texts
-        }
+        },
+        timeout=60
     )
+
+    print("Received embedding response")
 
     response.raise_for_status()
 
     data = response.json()
 
-    # Ollama batch embeddings endpoint
     if "embeddings" in data:
         return data["embeddings"]
 
-    # fallback if API returns single embedding
     if "embedding" in data:
         return [data["embedding"]]
 

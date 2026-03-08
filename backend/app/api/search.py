@@ -19,3 +19,16 @@ def search(request: SearchRequest):
         "query": request.query,
         "results": results
     }
+
+from app.services.rag_service import rag_answer
+
+
+@router.post("/chat")
+def chat(request: SearchRequest):
+
+    answer = rag_answer(request.query)
+
+    return {
+        "question": request.query,
+        "answer": answer
+    }
