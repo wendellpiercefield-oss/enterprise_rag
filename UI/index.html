@@ -1,61 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="header">
+<div id="loginPanel" class="loginPanel">
+  <h2>Sign in</h2>
+  <input id="email" placeholder="Email" value="admin@whitedrive.local">
+  <input id="password" type="password" placeholder="Password" value="ChangeMeNow!">
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="appPanel" style="display:none;">
+  <div class="header">
     <img src="images/whitelogo.png" class="logo">
     <div class="title">White Engineering Knowledge Assistant</div>
-</div>
+    <div class="headerRight">
+      <span id="modeBadge"></span>
+      <span id="userBadge"></span>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
 
-<div class="layout">
+  <div class="toolbar">
+    <label>Collection:</label>
+    <select id="collectionSelect" onchange="onCollectionChange()"></select>
+  </div>
 
-    <!-- LEFT: DOCUMENT PANEL -->
+  <div class="layout">
     <div class="panel documents">
-
-        <h3>Documents</h3>
-
-        <input type="file" id="fileUpload">
-
-        <button onclick="upload()">Upload</button>
-
-        <div id="doclist">
-            Manuals will appear here
-        </div>
-
+      <h3>Documents</h3>
+      <input type="file" id="fileUpload">
+      <button onclick="upload()">Upload</button>
+      <div id="uploadStatus"></div>
+      <div id="doclist">Manuals will appear here</div>
     </div>
 
-    <!-- CENTER: CHAT -->
     <div class="panel chat">
-
-        <div id="chatWindow"></div>
-
-        <div class="chatInput">
-
-            <input id="question"
-            placeholder="Ask about torque specs, shaft sizes, service procedures...">
-
-            <button onclick="ask()">Ask</button>
-
-        </div>
-
+      <div id="chatWindow"></div>
+      <div class="chatInput">
+        <input id="question" placeholder="Ask about torque specs, shaft sizes, service procedures...">
+        <button onclick="ask()">Ask</button>
+      </div>
     </div>
 
-    <!-- RIGHT: SOURCES -->
     <div class="panel sources">
-
-        <h3>Sources</h3>
-
-        <div id="sources"></div>
-
+      <h3>Sources</h3>
+      <div id="sources"></div>
     </div>
-
+  </div>
 </div>
 
+<script src="js/marked.min.js"></script>
 <script src="app.js"></script>
-
-</body></html>
+<script>
+document.getElementById("question")?.addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    ask();
+  }
+});
+</script>
+</body>
+</html>
