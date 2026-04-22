@@ -3,23 +3,25 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# venv
 .venv/
+backend/.venv/
+
+# env
 .env
 
-# Node
-node_modules/
-dist/
-
-# Data
-data/
-
-# Logs
-*.log
-
-# OS
+# editor/os
+.vscode/
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
-.idea/
+# runtime data
+data/*
+!data/.gitkeep
+
+uploads/*
+!uploads/.gitkeep
+
+logs/*
+!logs/.gitkeep
