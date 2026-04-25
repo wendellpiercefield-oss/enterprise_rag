@@ -1,40 +1,35 @@
 import re
 
+MAX_CHARS = 1500
 
-def chunk_text(text, chunk_size=1200, overlap=200):
 
-    # normalize whitespace
-    text = re.sub(r'\r', '', text)
-
-    # split on headings and figures
-    sections = re.split(
-        r'\n(?=(Table|Figure|Disassembly|Assembly|Specifications|Dimensions))',
-        text,
-        flags=re.IGNORECASE
-    )
+def chunk_text(text: str):
+    # Split by logical sections first (paragraphs, steps)
+    sections = re.split(r'\n\s*\n', text)
 
     chunks = []
-    current_chunk = ""
+    current = ""
 
     for section in sections:
+        section = section.strip()
+        if not section:
+            continue
 
-        if len(current_chunk) + len(section) < chunk_size:
-            current_chunk += section
+        # If section is too big, split further
+        if len(section) > MAX_CHARS:
+            parts = [section[i:i+MAX_CHARS] for i in range(0, len(section), MAX_CHARS)]
         else:
-            chunks.append(current_chunk.strip())
-            current_chunk = section
+            parts = [section]
 
-    if current_chunk:
-        chunks.append(current_chunk.strip())
+        for part in parts:
+            if len(current) + len(part) < MAX_CHARS:
+                current += "\n\n" + part
+            else:
+                if current:
+                    chunks.append(current.strip())
+                current = part
 
-    # add overlap to preserve context
-    final_chunks = []
-    for i, chunk in enumerate(chunks):
+    if current:
+        chunks.append(current.strip())
 
-        if i > 0:
-            overlap_text = chunks[i-1][-overlap:]
-            chunk = overlap_text + "\n" + chunk
-
-        final_chunks.append(chunk)
-
-    return final_chunks
+    return chunks

@@ -1,7 +1,11 @@
 import requests
 
-OLLAMA_URL = "http://localhost:11434/api/embed"
-MODEL = "nomic-embed-text"
+from app.core.config import get_settings
+
+settings = get_settings()
+
+OLLAMA_URL = f"{settings.ollama_base_url}/api/embed"
+MODEL = settings.embed_model
 
 
 def generate_embeddings(texts):

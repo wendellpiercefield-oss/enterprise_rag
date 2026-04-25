@@ -39,6 +39,8 @@ def upload_document(
     unique_name = f"{uuid.uuid4()}_{file.filename}"
     file_path = storage_root / unique_name
 
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
     with file_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 

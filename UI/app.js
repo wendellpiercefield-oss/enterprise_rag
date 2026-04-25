@@ -1,3 +1,4 @@
+const API_BASE = window.location.origin;
 let authToken = localStorage.getItem("token") || "";
 let currentUser = null;
 let currentCollectionId = null;
@@ -78,7 +79,7 @@ async function login() {
   }
 
   try {
-    const response = await fetch("http://localhost:8000/auth/login", {
+    const response = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -116,7 +117,7 @@ async function login() {
 }
 
 async function loadMe() {
-  const response = await apiFetch("http://localhost:8000/auth/me");
+  const response = await apiFetch(`${API_BASE}/auth/me`);
 
   if (!response.ok) {
     throw new Error("Could not load current user");
@@ -154,7 +155,7 @@ function logout() {
 // Collections
 // -------------------------
 async function loadCollections() {
-  const response = await apiFetch("http://localhost:8000/collections/");
+  const response = await apiFetch(`${API_BASE}/collections/`);
 
   if (!response.ok) {
     const errText = await response.text();
@@ -256,7 +257,7 @@ async function ask() {
   let fullText = "";
 
   try {
-    const response = await apiFetch("http://localhost:8000/chat/stream", {
+    const response = await apiFetch(`${API_BASE}/chat/stream`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -400,39 +401,53 @@ async function upload() {
   }
 
   if (!fileInput || !fileInput.files.length) {
-    alert("Select a file first");
+    alert("Select one or more files first");
     return;
   }
 
-  const file = fileInput.files[0];
-  const formData = new FormData();
-  formData.append("file", file);
+  const files = Array.from(fileInput.files);
+  let successCount = 0;
+  let failCount = 0;
 
-  try {
-    setStatus("Uploading...");
+  setStatus(`Uploading ${files.length} file(s)...`);
 
-    const response = await apiFetch(
-      `http://localhost:8000/documents/upload/${currentCollectionId}`,
-      {
-        method: "POST",
-        body: formData
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      setStatus(`Uploading ${file.name}...`);
+
+      const response = await apiFetch(
+        `${API_BASE}/documents/upload/${currentCollectionId}`,
+        {
+          method: "POST",
+          body: formData
+        }
+      );
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error(`Upload failed for ${file.name}:`, errText);
+        failCount++;
+        continue;
       }
-    );
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error(errText);
-      throw new Error("Upload failed");
+      const result = await response.json();
+      console.log(`Uploaded ${file.name}:`, result);
+      successCount++;
+    } catch (err) {
+      console.error(`Upload error for ${file.name}:`, err);
+      failCount++;
     }
+  }
 
-    const result = await response.json();
+  fileInput.value = "";
 
-    setStatus(`Uploaded: ${result.filename} (${result.status})`);
-    fileInput.value = "";
-  } catch (err) {
-    console.error(err);
-    setStatus("Upload failed");
-    alert("Upload error");
+  if (failCount === 0) {
+    setStatus(`Uploaded ${successCount} file(s) successfully.`);
+  } else {
+    setStatus(`Uploaded ${successCount} file(s), failed ${failCount}.`);
   }
 }
 
