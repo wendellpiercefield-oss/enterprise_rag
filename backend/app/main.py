@@ -28,7 +28,8 @@ app.include_router(collection_router)
 app.include_router(documents_router)
 app.include_router(search_router)
 
-frontend_path = Path("C:/enterprise_rag/UI")
+BASE_DIR = Path(__file__).resolve().parents[2]
+frontend_path = BASE_DIR / "UI"
 
 app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 

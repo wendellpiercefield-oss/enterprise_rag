@@ -43,6 +43,15 @@ def expand_query(query: str) -> str:
     if any(w in q for w in ["INSTALL", "SEAL", "KIT", "PROCEDURE", "HOW"]):
         q += " REMOVE INSTALL STEPS PROCEDURE SHAFT BEARING SEAL MOTOR"
 
+    if any(w in q for w in ["DATE", "CHANGE", "CHANGED", "WHEN"]):
+        q += (
+            " EFFECTIVE DATE TRANSITION CHANGE EVENT "
+            "PRIOR TO AFTER BEFORE "
+            "MANUFACTURED AFTER MANUFACTURED PRIOR "
+            "REPLACED BY SUPERSEDED CONVERTED UPDATED REVISION "
+            "FROM TO BEFORE AFTER DIFFERENCE OLD NEW"
+        )
+
     return q
 
 

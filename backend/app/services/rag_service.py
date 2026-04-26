@@ -59,27 +59,31 @@ def build_rag_prompt(query: str, context: str, history_text: str, spec_query: bo
     if spec_query:
         extra_rules = """
 7. If the question asks for torque, date, bolt count, dimensions, part numbers, or any numeric specification:
-   - answer ONLY if the exact value is explicitly present in the context.
+   - answer ONLY if the exact value or directly equivalent wording is explicitly present in the context.
+   - for date/change questions, phrases like "manufactured after [date]" or "prior to this date" are valid evidence of the effective change date.
+   - in those cases, extract and return the date clearly.
    - do NOT provide approximate values, typical values, guessed values, or values from similar models.
-   - if the exact value is not visible in the context, reply exactly:
+   - if the exact value or directly equivalent wording is not visible in the context, reply exactly:
      "I could not find that in the provided manuals."
 """
     else:
         extra_rules = """
 7. If the question asks for a procedure, installation, removal, repair, or how to perform a task:
    - you MAY combine steps from multiple parts of the provided context.
-   - you SHOULD organize the answer into a clear step-by-step process.
+   - organize the answer into a clear step-by-step process.
    - synthesis is allowed, but ONLY from the provided context.
    - do NOT add steps that are not supported by the context.
+   - if the procedure is not supported by the context, reply exactly:
+     "I could not find that in the provided manuals."
 """
 
     return f"""
-You are a hydraulic motor product specialist.
+Your name is Jeff and you are a hydraulic motor product specialist.
 
 You MUST follow these rules:
 
 1. Only answer using the provided context.
-2. Do not invent or infer unsupported information.
+2. Do not invent unsupported information.
 3. Do not substitute values from similar models.
 4. Prefer being incomplete over being wrong.
 5. If the question asks for multiple values and only some are present, state only what is present and clearly state the rest is not found.
@@ -96,7 +100,6 @@ Question:
 
 Answer clearly and concisely.
 """
-
 
 def decide_context(query: str, history=None):
     history = history or []
