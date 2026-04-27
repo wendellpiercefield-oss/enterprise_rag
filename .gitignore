@@ -25,3 +25,5 @@ uploads/*
 
 logs/*
 !logs/.gitkeep
+
+storage/

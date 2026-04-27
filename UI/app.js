@@ -3,6 +3,8 @@ let authToken = localStorage.getItem("token") || "";
 let currentUser = null;
 let currentCollectionId = null;
 
+let chatHistory = [];
+
 // -------------------------
 // Helpers
 // -------------------------
@@ -263,7 +265,8 @@ async function ask() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        query: question
+        query: question,
+        history: chatHistory
       })
     });
 
@@ -313,7 +316,15 @@ async function ask() {
 
         if (payload.done) {
           if (!fullText) {
-            updateAssistantMessage(assistantEl, "No answer returned.");
+            fullText = "No answer returned.";
+            updateAssistantMessage(assistantEl, fullText);
+          }
+
+          chatHistory.push({ role: "user", content: question });
+          chatHistory.push({ role: "assistant", content: fullText });
+
+          if (chatHistory.length > 12) {
+            chatHistory = chatHistory.slice(-12);
           }
 
           renderSources(payload.sources || [], question);

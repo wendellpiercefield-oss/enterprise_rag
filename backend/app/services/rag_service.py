@@ -54,6 +54,22 @@ def format_history(history):
 
     return "\n".join(lines)
 
+def build_general_prompt(query: str, history_text: str) -> str:
+    return f"""
+You are Jeff, a helpful internal assistant.
+
+Be conversational, direct, and useful.
+If you are unsure, say so instead of guessing.
+
+Conversation so far:
+{history_text}
+
+User:
+{query}
+
+Answer:
+"""
+
 
 def build_rag_prompt(query: str, context: str, history_text: str, spec_query: bool) -> str:
     if spec_query:
@@ -110,7 +126,7 @@ def decide_context(query: str, history=None):
     if not should_use_rag(query):
         return {
             "mode": "general",
-            "prompt": query,
+            "prompt": build_general_prompt(query, history_text),
             "sources": []
         }
 
